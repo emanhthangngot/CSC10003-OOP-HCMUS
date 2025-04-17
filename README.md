@@ -47,6 +47,160 @@ I begin in 27th February 2025
     performed on that data into a single entity
 - Information hiding 
     - A C++ class provides a mechanism for specifying access
+
+## Static
+Static memeber variables are shared by all objects of the class
+```
+class Bruh {
+private:
+    static int count; // Biến đếm số lượng đối tượng của class Bruh
+public:
+    static int show() { return count; }
+    Bruh() { count++; }
+    ~Bruh() { count--; }
+};
+int Bruh::count = 0;
+int main() { 
+    Bruh a, b; 
+    // Bruh::show() will return 2 
+}
+```
+### Static variable
+As the variables declared as static are initialized only once as they are allocated space in separate static storage so, the static member variables in a class are shared by the objects. There cannot be multiple copies of the same static variables for different objects. Also because of this reason static variables cannot be initialized using constructors
+```
+#include <iostream>
+using namespace std;
+
+class GfG {
+public:
+    // Static data member
+    static int i;
+
+    GfG(){
+        // Do nothing
+    };
+};
+
+// Static member inintialization
+int GfG::i = 1;
+
+int main() {
+  
+    // Prints value of i
+    cout << GfG::i;
+}
+```
+The static data members can be used to implement the following:
+- Counting Objects of a Class
+- Store and share configuration or settings globally.
+- Tracking Shared Resources
+- Regulate or limit operations performed by multiple objects.
+- Ensure a class has only one instance by using static members.
+
+### Static Member Functions in a Class
+Static member functions are allowed to access only the static data members or other static member functions, they cannot access the non-static data members or member functions of the class
+```
+#include <iostream>
+using namespace std;
+
+class GfG {
+public:
+    // Static member function
+    static void printMsg() { cout << "Welcome to GfG!"; }
+};
+
+int main() {
+    // Invoking a static member function
+    GfG::printMsg();
+}
+
+```
+
+### Const member function
+- Is a member function that guarantees it will not modify the object or call any non-const member functions (as they may modify the object)
+- Append the `const` keyword to the funnction prototype, after tthe parameter list, before the function body
+```
+int Bruh(int lmao) const {}
+```
+- For member functions defined outside of the class definition, the const keyword must be used on both the **function prototype** in the class definition and on the **function definition**
+```
+class Bruh {
+public:
+    int lmao() const; 
+};
+int Bruh::lmao() const {
+    return lmao;
+}
+```
+- Best practice: **Make any member function that does not modify the state of the class object const, so that it can be called by const objects**
+  
+The below C++ code demonstrates how to define constant member functions outside the class definition and showcases the usage of a constant member function to set and retrieve the value of a private member variable
+```
+// Constant member function defined outside the class
+#include <iostream>
+using namespace std;
+
+class Demo {
+    int x;
+
+public:
+    void set_data(int);
+
+    // const member function
+    int get_data() const;
+};
+
+// Function definition for setting the value of x.
+void Demo::set_data(int a) { x = a; }
+
+// Function definition for retrieving the value of x (const
+// member function).
+int Demo::get_data() const { return x; }
+
+main()
+{
+    Demo d;
+    // Set the value of x to 10 using the non-const member
+    // function.
+    d.set_data(10);
+    // Print the value of x using the const member function.
+    cout << d.get_data(); // 10
+
+    return 0;
+}
+
+```
+The below C++ program demonstrates that const functions can be called by non-const objects.
+```
+// C++ program to demonstrate that const functions can be
+// called by non const objects
+
+#include <iostream>
+using namespace std;
+
+class Test {
+    int value;
+
+public:
+    Test(int v = 0) { value = v; }
+
+    // const member function
+    int getValue() const { return value; }
+};
+
+int main()
+{
+    // non const object
+    Test t(20);
+    cout << t.getValue(); // 20
+    return 0;
+}
+
+```
+
+
+
+
 ## Taxonomy of member functions
 - `Constructor`: an operation that creates a new instance of a class
 - `Mutator`: an operation that changes the state of the data members of an object
@@ -109,16 +263,39 @@ private:
    int iDay, iMonth, iYear;
 };
 ```
-####  The *this* pointer
-- C++ adds an implicit function parameter - the pointer to the current object instance: this
-- **this** is a constant pointer, you cannot modify it within a member function.
+####  The **this* pointer
+- **this pointer* is a hidden const pointer (can change the value oof the object it points to, but can not make it point to something else) that holds the address of the object the member function was called on
+- All non-static member functions have a "this" pointer
+- "this" always points to the object being operated on, and because "this" is just a function parameter, it doesn't add any memory usage to class
+- Use to makke function chainable. Most often used when overloading operators for classes.
 ```cpp
-Date::Date(int iDay, int iMonth, int iYear)
- {
- this->iDay = iDay;
- this->iMonth = iMonth;
- this->iYear = iYear;
- }
+#include<iostream>
+class Calc {
+    private:
+        int m_value;
+    public:
+        Calc(): m_value(1) {}
+        Calc& add(int value) { 
+            m_value += value; 
+            return *this; 
+        }
+        Calc& sub(int value) {
+            m_value -= value; 
+            return *this;
+        }
+        Calc& mult(int value) {
+            m_value *= value; 
+            return *this;
+        }
+        int get() {
+            return m_value;
+        }
+};
+int main() {
+    Calc calc;
+    calc.add(5).sub(3).mult(4); // returning *this, reference to calc
+    std::cout << calc.get(); // = 12
+}
 ```
 
 ### Destructor
@@ -143,6 +320,31 @@ class MyArray {
 ```
 - You don’t need to write a destructor if your class has nothing to clean up.
 - If you are using resources, for example dynamic memory allocation, and you forget to have your destructor, the program will create the memory leaking.
+
+### Delegating constructors (constructor chaining)
+Constructors are allowed to call other constructors from the same class
+```
+#include <iostream>
+using namespace std;
+
+class A {
+    int x, y, z;
+public:
+    A() : x(0), y(0), z(0) {}
+    A(int z) : A() {
+    this->z = z;
+}
+void show() {
+    cout << x << '\n' << y << '\n' << z;
+}
+};
+
+int main() {
+    A obj(3);
+    obj.show(); // 0 0 3
+    return 0;
+}
+```
 
 ### Members Initialization
 ```cpp
@@ -374,13 +576,18 @@ int main()
 ```
 ### Pure virtual function
 ```cpp
-class Bruh {
+
+class Animal {
 public:
-    virtual void bruh() = 0; // a pure virtual function
+    virtual void talk() = 0;
 };
+
+int main() {
+    Animal a;
+    a.talk();  // error: abstract class 
+}
 ```
-Any class with one or more pure function
-s becomes an **abstruct base class**
+Any class with one or more pure functions becomes an **abstruct base class**
 
 ### Interface classes
 An interface class is a class that has no member variables, and where all of the functions are pure virtual.
@@ -445,7 +652,7 @@ int main() {
 ```
 - Virtual function resolution only works when a member function is called through a pointer or reference to a class type object
 - If a function id virtual, all matching overrides in derived classes are implicitly virtual
-- There may be cases when you dont't want so to be able to overide a virtual function or inherit from a class the `final specifier` can be used to tell the compiler to enforce this
+- There may be cases when you dont want so to be able to overide a virtual function or inherit from a class the `final specifier` can be used to tell the compiler to enforce this
 ```cpp
 #include<iostream>
 using namespace std;
@@ -480,3 +687,4 @@ int main() {
     // d1.print(); error
 }
 ```
+

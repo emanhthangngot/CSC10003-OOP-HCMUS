@@ -40,5 +40,10 @@ int main() {
     bptr2->show2();
     // Result: Derived class function
 
+    // Base b;
+    // b.show();
+    // Derived d;
+    // d.show();
+
     return 0;
 }
